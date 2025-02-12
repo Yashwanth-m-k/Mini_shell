@@ -1,12 +1,17 @@
-
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio_ext.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
 #include"mini.h"
 
+extern char  external[200][10];
 
-char *builtins[] = {"echo", "printf", "read", "cd", "pwd", "pushd", "popd", "dirs", "let", "eval",
-						"set", "unset", "export", "declare", "typeset", "readonly", "getopts", "source",
-						"exit", "exec", "shopt", "caller", "true", "type", "hash", "bind", "help", NULL};
-
-char  external[200][10];
 
 void extract_external_commands(char external[200][10]) {
     int fd = open("command.txt", O_RDONLY);
@@ -24,7 +29,9 @@ void extract_external_commands(char external[200][10]) {
             buffer[i] = '\0';  // Null-terminate the string
 
            
-        strcpy( external[j],buffer);
+        strcpy(external[j],buffer);
+       
+        printf("%s",external[j]);
             j++;
 
             if (j >= 200) {

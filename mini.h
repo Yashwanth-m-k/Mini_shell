@@ -27,15 +27,16 @@
 
 
 void scan_input(char *prompt, char *input_string);
-char *get_command(char *input_string);
+char *get_command(char *input_string,char *str);
 
 void copy_change(char *prompt, char *input_string);
 
-int check_command_type(char *command);
+
 void echo(char *input_string, int status);
 void execute_internal_commands(char *input_string);
 void signal_handler(int sig_num);
-void extract_external_commands(char external[][10]);  // ✅ Flexible row size
+void extract_external_commands(char external[][10]);  
+int check_command_type(char *command);
 
 
 
