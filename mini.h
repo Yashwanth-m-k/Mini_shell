@@ -25,7 +25,9 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+extern char external[200][50]; 
 
+                        
 void scan_input(char *prompt, char *input_string);
 char *get_command(char *input_string,char *str);
 
@@ -35,8 +37,8 @@ void copy_change(char *prompt, char *input_string);
 void echo(char *input_string, int status);
 void execute_internal_commands(char *input_string);
 void signal_handler(int sig_num);
-void extract_external_commands(char **external);  
-int check_command_type(char *command);
+void extract_external_commands(char external[200][50]);  
+int check_command_type(char *command,char external[200][50]);
 
 
 
