@@ -44,22 +44,23 @@ void extract_external_commands(char external[200][50]) {
 
 void scan_input(char *prompt, char *input_string) {
     while (1) {
+        
         printf("%s", prompt);
-        int =scanf(" %[^\n]", input_string);  // Added space before %[^\n] to consume '\n'
-
-       // printf("%s\n",input_string);
-        // if ((strlen(input_string))==1 ) {
-
-        //     continue;
+    scanf("%[^\n]", input_string);  // Added space before %[^\n] to consume '\n'
+        __fpurge(stdin);
+        // printf("%c", input_string[0]);
+        int len = strlen(input_string);
+        // printf("len = %d", len);
+        //  if(input_string == NULL){
+        //         continue;
         // }
         char str[100];  // Increased size to avoid buffer overflow
         char *buffer = strstr(input_string, "PS1");
 
         if (buffer != NULL && strncmp(buffer, "PS1", 3) == 0) {
             int i = 4, j = 0;
-            int len = strlen(input_string);
             
-           
+                 
             while (j < len) {
 
                 if (input_string[j] == ' ') {
@@ -88,6 +89,16 @@ get_command(input_string,str);
   }
   else if(ret == 2){
     printf("External\n");
+    pid_t child;
+    child=fork();
+    if(child == 0){
+        //child
+     execute_exteranl_command(input_string);
+    }
+    else{
+        //parent
+
+    }
  }                                                           	
 
   else if(ret == 3){
@@ -143,5 +154,22 @@ int check_command_type(char *command, char external[200][50]) {
            
     return NO_COMMAND;  // No command found
 }
+void execute_exteranl_command(char *input_string){
 
+    char commend[10][20];
+    int i=0,j=0;
+    while(input_string[i] != '\0' ){
+        if(input_string[i] == ' ' ){
+            commend[j][i]='\0';
+            j++;
+            i=0;
+            continue;
+        }
+        else{
+                commend[j][i]=input_string[i];
+                i++;
+        }
+    }
+    printf("->%s\n",commend[j]);
+}
 

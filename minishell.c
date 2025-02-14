@@ -3,7 +3,7 @@
 #include"mini.h"
 
 int main() {
-    char input_string[100]={'\0'};
+    char input_string[100];
     char prompt[100] = "Minishell$:";
     system("clear");
 

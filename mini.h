@@ -40,6 +40,7 @@ void signal_handler(int sig_num);
 void extract_external_commands(char external[200][50]);  
 int check_command_type(char *command,char external[200][50]);
 
-
+//
+void execute_exteranl_command(char *input_string);
 
 #endif
