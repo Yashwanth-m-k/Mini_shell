@@ -48,12 +48,14 @@ void scan_input(char *prompt, char *input_string) {
         printf("%s", prompt);
     scanf("%[^\n]", input_string);  // Added space before %[^\n] to consume '\n'
         __fpurge(stdin);
-        // printf("%c", input_string[0]);
+       
         int len = strlen(input_string);
+
         // printf("len = %d", len);
         //  if(input_string == NULL){
         //         continue;
         // }
+        
         char str[100];  // Increased size to avoid buffer overflow
         char *buffer = strstr(input_string, "PS1");
 
@@ -80,24 +82,31 @@ void scan_input(char *prompt, char *input_string) {
         }
         }
         else{
+           
 get_command(input_string,str);
+
 //printf("%s",str);
   int ret = check_command_type(str,external);
-
+  
  if(ret == 1){
      printf("Builtin\n");
   }
   else if(ret == 2){
-    printf("External\n");
+    // printf("External\n");
+    
     pid_t child;
+   
     child=fork();
+   
+   // printf("%s ",temp);
     if(child == 0){
-        //child
+        //child    
      execute_exteranl_command(input_string);
+     exit(0);
     }
     else{
         //parent
-
+        wait(NULL); 
     }
  }                                                           	
 
@@ -154,22 +163,32 @@ int check_command_type(char *command, char external[200][50]) {
            
     return NO_COMMAND;  // No command found
 }
-void execute_exteranl_command(char *input_string){
+void execute_exteranl_command(char *input_string) {
+    char *commend[50];  // Array of string pointers
+    int i = 0,flag=0;
 
-    char commend[10][20];
-    int i=0,j=0;
-    while(input_string[i] != '\0' ){
-        if(input_string[i] == ' ' ){
-            commend[j][i]='\0';
-            j++;
-            i=0;
-            continue;
+    // Tokenizing input_string into words
+    char *token = strtok(input_string, " ");
+    while (token != NULL) {
+        if( commend[i]== "|"){
+            flag=1;
         }
-        else{
-                commend[j][i]=input_string[i];
-                i++;
-        }
+        commend[i++] = token;
+        token = strtok(NULL, " ");
+        
+    
     }
-    printf("->%s\n",commend[j]);
+    commend[i] = NULL;  // NULL-terminate for execvp
+
+   if(flag==1){
+    printf("pipe is not present\n");
+   }
+    //printf("-> %s\n", commend[0]);  // Print first command (for debugging)
+
+    execvp(commend[0], commend);  // Execute command
+    
+    perror("execvp");  // If execvp fails
+    exit(EXIT_FAILURE);
 }
+
 
