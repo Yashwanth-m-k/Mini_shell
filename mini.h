@@ -42,5 +42,5 @@ int check_command_type(char *command,char external[200][50]);
 
 //
 void execute_exteranl_command(char *input_string);
-
+void execute_internal_commend(char *input_string,char *str);
 #endif
