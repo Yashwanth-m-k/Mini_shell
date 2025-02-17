@@ -93,11 +93,11 @@ get_command(input_string,str);
  
 
  if(ret == 1){
-     printf("Builtin\n");
+    
      execute_internal_commend(input_string,str);
   }
   else if(ret == 2){
-     printf("External\n");
+     
     
     pid_t child;
    
@@ -115,8 +115,8 @@ get_command(input_string,str);
         int status;
         child_1 = wait(&status); 
         child_2=getpid();
-        // printf("Child exit status = %d\n",child_1);
-        // printf("Child exit status1 = %d\n",getpid());
+        printf("Child exit status = %d\n",child_1);
+         printf("Child exit status1 = %d\n",getpid());
 
     }
  }                                                           	
