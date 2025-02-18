@@ -12,6 +12,16 @@
 #include <signal.h>
 #include <sys/wait.h>
 
+typedef struct node
+{
+    /* data */
+     pid_t id;
+     char str[50];
+     struct node *link;
+  
+     
+}slist;
+
 
 #define BUILTIN		1
 #define EXTERNAL	2
@@ -43,4 +53,6 @@ int check_command_type(char *command,char external[200][50]);
 //
 void execute_exteranl_command(char *input_string);
 void execute_internal_commend(char *input_string,char *str);
+void handler(int num);
+int insert_at_last(slist head**);
 #endif

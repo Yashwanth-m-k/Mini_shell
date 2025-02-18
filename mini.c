@@ -1,12 +1,11 @@
 #include "mini.h"  
-
+int static flg1=0;
 char external[200][50];
 
 char *builtins[] = {"echo", "printf", "read", "cd", "pwd", "pushd", "popd", "dirs", "let", "eval",
 						"set", "unset", "export", "declare", "typeset", "readonly", "getopts", "source",
 						"exit", "exec", "shopt", "caller", "true", "type", "hash", "bind", "help", NULL};
-   pid_t child_1;
-   pid_t child_2;
+   pid_t child_1,child_2,child;
 void extract_external_commands(char external[200][50]) {
     memset(external, 0, 200 * 50 * sizeof(char)); 
     int fd = open("command.txt", O_RDONLY);
@@ -34,33 +33,43 @@ void extract_external_commands(char external[200][50]) {
             i = 0;  // Reset index for the next command
         } else {
             if (i < 49) {  // Prevent buffer overflow
-                external[j][i] = buffer;
-                i++;
+                external[j][i++] = buffer;
+                
             }
         }
+       
     }
 
     close(fd);
 }
 
 void scan_input(char *prompt, char *input_string) {
+    
+ 
+    
     while (1) {
-        
+      
         printf("%s", prompt);
-    scanf("%[^\n]", input_string);  // Added space before %[^\n] to consume '\n'
-        __fpurge(stdin);
-       
-        int len = strlen(input_string);
+        if (!fgets(input_string, 100, stdin)) continue;
+        input_string[strcspn(input_string, "\n")] = 0;  // Remove newline
 
-        // printf("len = %d", len);
-        //  if(input_string == NULL){
-        //         continue;
-        // }
-        
+        // printf("%s\n",input_string);
+   
+        // scanf("%[^\n]", input_string);  // Added space before %[^\n] to consume '\n'
+    //     __fpurge(stdin);
+       
+        int len=strlen(input_string);
+      if(len == 0){
+        flg1=1;
+        printf("Empty\n");
+         continue;
+      }
+      
         char str[100];  // Increased size to avoid buffer overflow
         char *buffer = strstr(input_string, "PS1");
 
-        if (buffer != NULL && strncmp(buffer, "PS1", 3) == 0) {
+        if (buffer != NULL && strncmp(buffer, "PS1", 3) == 0)
+         {
             int i = 4, j = 0;
             
                  
@@ -79,56 +88,49 @@ void scan_input(char *prompt, char *input_string) {
             
           if(i!=1){
             str[j] = '\0';  // Null-terminate
-            // printf("hiii\n");
             strcpy(prompt, str);  // Update prompt
         }
         }
         else{
            
-get_command(input_string,str);
+   get_command(input_string,str);
 
-//printf("%s",str);
   int ret = check_command_type(str,external);
 
- 
-
- if(ret == 1){
+ if(ret ==BUILTIN){
     
      execute_internal_commend(input_string,str);
   }
-  else if(ret == 2){
+  else if(ret ==EXTERNAL){
      
-    
-    pid_t child;
-   
     child=fork();
     
   
     if(child == 0){
         //child    
+      
+        signal(SIGINT,SIG_DFL);
+      execute_exteranl_command(input_string);
         
-     execute_exteranl_command(input_string);
-     exit(0);
     }
     else{
         //parent
+       
         int status;
         child_1 = wait(&status); 
         child_2=getpid();
-        printf("Child exit status = %d\n",child_1);
-         printf("Child exit status1 = %d\n",getpid());
-
+        
+        
     }
  }                                                           	
-
-  else if(ret == 3){
+  else if(ret == NO_COMMAND)
+  {
     printf("Command '%s' not found\n",str);
          
      }
   }
 }
    
-
 }
 char *get_command(char *input_string,char *str)
 {
@@ -148,7 +150,7 @@ char *get_command(char *input_string,char *str)
 }
 int check_command_type(char *command, char external[200][50]) {
     int i = 0;
-  
+ 
     // Check built-in commands
     while (builtins[i] != NULL) {
         if ((strcmp(builtins[i], command)) == 0) {
@@ -158,20 +160,13 @@ int check_command_type(char *command, char external[200][50]) {
     }
 
    for (i = 0; i < 152; i++) {
-      
-
-       // printf("Comparing Input %s with External[%d]: %s\n", command, i, external[i]); // Debug
 
         if ((strcmp(external[i], command)) == 0) {
-            
+           
             return EXTERNAL;  // External command
         }
-        // int len1=strlen(external[i]);
-        //  int len2=strlen(command);
-        //     printf("l1 = %d\n l2 = %d\n",len1,len2);
-    }
-            
-           
+      
+    }        
     return NO_COMMAND;  // No command found
 }
 void execute_exteranl_command(char *input_string)
@@ -193,64 +188,113 @@ void execute_exteranl_command(char *input_string)
         
         token = strtok(NULL, " ");  
     
-    }
-    
+    } 
     commend[i] = NULL;  // NULL-terminate for execvp
 
-
    if(flag==1){
-
     printf("pipe is present\n");
-
    }
    else{
     execvp(commend[0], commend);  // Execute command
-    
     perror("execvp");  // If execvp fails
-    exit(EXIT_FAILURE);
    }
+  
 }
 void execute_internal_commend(char *input_string,char *str)
 {
     int ret;
     
-    if(strcmp(input_string,"exit")==0)
-    {
-        exit(0);
+    if (strcmp(input_string, "exit") == 0) exit(0);
+    if (strcmp(input_string, "pwd") == 0) {
+        char cwd[100];
+        getcwd(cwd, 100);
+        printf("%s\n", cwd);
+        return;
     }
-    if(strcmp(input_string,"pwd")==0)
-    {
-       // getpwd(input_string);
+    if (strncmp(input_string, "cd ", 3) == 0) {
+        char *dir = input_string + 3;
+        if (chdir(dir) == -1) perror("Invalid path");
+        return;
     }
-    if(strcmp(input_string,"cd")==0)
-    {
-        ret=chdir(input_string);
-        if(ret == -1){
-            printf("not a valid path\n");
-        }
-        
+    if (strcmp(input_string, "echo $?") == 0) {
+        printf("%d\n", child_2);
+        return;
     }
-    if(strcmp(input_string,"echo $?")==0)
-    {
-        printf("%d\n",child_2);
-    }
-    if(strcmp(input_string,"echo $$")==0)
-    {
-        printf("%d\n",child_1);
+    if (strcmp(input_string, "echo $$") == 0) {
+        printf("%d\n", child_1);
+        return;
     }
     if(strcmp(input_string,"echo $SHELL")==0)
     {
         char *env;
-        env=getenv(input_string);
+        env=getenv("SHELL");
         if(env == NULL)
         {
             printf("Invalid \n");
         }
-        else
-        printf("%s",env);
+        else{
+        printf("%s\n",env);
+        }
 
     }
 
+    char *commend[50];  // Array of string pointers
+    int i = 0,flag=0;
+    
+    // Tokenizing input_string into words
+    char *token = strtok(input_string, " ");
+    while (token != NULL) {
+       
+        if((strcmp(token, "|"))==0){
+         
+               flag=1;
+           }
+       
+        commend[i++] = token;
+        
+        token = strtok(NULL, " ");  
+    
+    } 
+    commend[i] = NULL;  // NULL-terminate for execvp
+
+   if(flag==1){
+    printf("pipe is present\n");
+   }
+   else{
+    execvp(commend[0], commend);  // Execute command
+    perror("execvp");  // If execvp fails
+   }
     
 }
+void handler(int num) {
+    
+    if (num == SIGINT) {
+          // Handle Ctrl+C
+          printf("\n"); 
+        if(child == 0 || flg1==1)          
+        printf("Minishell$: ");
+        fflush(stdout);
+        flg1=0;
+        }
+  
+    
+    else if (num == SIGTSTP) {  // Handle Ctrl+Z
+        printf("\n");
+        if(child == 0 || flg1==1){
+        
+        printf("Minishell$: ");
+        fflush(stdout);
+        flg1=0;
+        }
+        else if(child > 0){
+         char  *head=NULL;
+            insert_at_last(slist head)
+        }
+}     // Ensure it appears immediately
 
+  
+}
+int insert_at_last(slist *head)
+{
+
+}
