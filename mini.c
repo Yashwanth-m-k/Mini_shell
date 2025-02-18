@@ -6,6 +6,8 @@ char *builtins[] = {"echo", "printf", "read", "cd", "pwd", "pushd", "popd", "dir
 						"set", "unset", "export", "declare", "typeset", "readonly", "getopts", "source",
 						"exit", "exec", "shopt", "caller", "true", "type", "hash", "bind", "help", NULL};
    pid_t child_1,child_2,child;
+   char input[100];
+   slist *head=NULL;
 void extract_external_commands(char external[200][50]) {
     memset(external, 0, 200 * 50 * sizeof(char)); 
     int fd = open("command.txt", O_RDONLY);
@@ -57,11 +59,10 @@ void scan_input(char *prompt, char *input_string) {
    
         // scanf("%[^\n]", input_string);  // Added space before %[^\n] to consume '\n'
     //     __fpurge(stdin);
-       
+    strcpy(input,input_string);
         int len=strlen(input_string);
       if(len == 0){
         flg1=1;
-        printf("Empty\n");
          continue;
       }
       
@@ -270,7 +271,7 @@ void handler(int num) {
     
     if (num == SIGINT) {
           // Handle Ctrl+C
-          printf("\n"); 
+         printf("\n"); 
         if(child == 0 || flg1==1)          
         printf("Minishell$: ");
         fflush(stdout);
@@ -287,8 +288,8 @@ void handler(int num) {
         flg1=0;
         }
         else if(child > 0){
-         char  *head=NULL;
-            insert_at_last(slist head)
+         
+            insert_at_last(head);
         }
 }     // Ensure it appears immediately
 
@@ -296,5 +297,44 @@ void handler(int num) {
 }
 int insert_at_last(slist *head)
 {
+   
+    slist *new = malloc(sizeof(slist));
+    if(new == NULL)
+    {
+        return 0;
+    }
+    new->id=child_2;
+    strcpy(new->str,input);
+    new->link=NULL;
+
+    if(head == NULL){
+        head=new;
+       
+    }
+    else{
+        slist *temp=head;
+        while(temp->link != NULL)
+        {
+            temp=temp->link;
+        }
+    }
+
+    if (head == NULL)
+	{
+		printf("INFO : List is empty\n");
+	}
+    else
+    {
+	    while (head)		
+	    {
+		    printf("[%d]+  ", head ->id);
+            printf("Stopped         %s\n",head->str);
+		    head = head->link;
+	    }
+
+	   
+    }
+    printf("Minishell$: ");
+        fflush(stdout);
 
 }
