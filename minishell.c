@@ -9,8 +9,9 @@ int main() {
     char prompt[100] = "Minishell$:";
     
     system("clear");
-     signal(SIGTSTP, handler);  // Handle Ctrl+Z
     signal(SIGINT, handler);   // Handle Ctrl+C
+     signal(SIGTSTP, handler);  // Handle Ctrl+Z
+    
 
      
     extract_external_commands(external);  // Fill external array with commands
