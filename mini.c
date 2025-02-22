@@ -53,11 +53,8 @@ void scan_input(char *prompt, char *input_string)
         if (!fgets(input_string, 100, stdin)) continue;
         input_string[strcspn(input_string, "\n")] = 0;  // Remove newline
 
-        // printf("%s\n",input_string);
-   
-        // scanf("%[^\n]", input_string);  // Added space before %[^\n] to consume '\n'
-    //     __fpurge(stdin);
     strcpy(input,input_string);
+    
         int len=strlen(input_string);
         if(len == 0)
         {
@@ -80,8 +77,6 @@ void scan_input(char *prompt, char *input_string)
                       str[j++] = input_string[i++];
                 }
             }
-
-            
           if(i!=1){
             str[j] = '\0';  // Null-terminate
             strcpy(prompt, str);  // Update prompt
@@ -94,7 +89,7 @@ void scan_input(char *prompt, char *input_string)
   int ret = check_command_type(str,external);
 
  if(ret ==BUILTIN){
-    
+  
      execute_internal_commend(input_string,str);
   }
   else if(ret ==EXTERNAL){
@@ -117,13 +112,14 @@ void scan_input(char *prompt, char *input_string)
        
         
         flg1=0;
-        int status;
+        int status=0;
         waitpid(child, &status, WUNTRACED);  // Ensure the shell properly waits
-        
+        child_1= WEXITSTATUS(status);
             child=0;
             child_2 = 0;
         
     }
+  
  }                                                           	
   else if(ret == NO_COMMAND)
   {
@@ -131,6 +127,7 @@ void scan_input(char *prompt, char *input_string)
          
      }
   }
+ 
 }
    
 }
@@ -174,27 +171,33 @@ int check_command_type(char *command, char external[200][50]) {
 void execute_exteranl_command(char *input_string)
  {
 
-    char *commend[50];  // Array of string pointers
-    int i = 0,flag=0;
+    char *commend[100];  // Array of string pointers
+    int i = 0, flag = 0;
+    int pipe_count = 0, pos = 0;
     
     // Tokenizing input_string into words
     char *token = strtok(input_string, " ");
     while (token != NULL) {
-       
-        if((strcmp(token, "|"))==0){
-         
-               flag=1;
-           }
-       
-        commend[i++] = token;
         
-        token = strtok(NULL, " ");  
+        if (strcmp(token, "|") == 0) {  // Fixing pipe comparison
+            flag = 1;
+            pipe_count++;
+            commend[i++] = NULL;  // Separate commands properly
+            pos = i;  // Store position of next command
+        } else {
+            commend[i++] = token;  // Store command/token
+        }
     
-    } 
-    commend[i] = NULL;  // NULL-terminate for execvp
+        token = strtok(NULL, " ");  // Get next token
+    }
+    
+    commend[i] = NULL;  // NULL-terminate for execvp()
+  
 
    if(flag==1){
-    printf("pipe is present\n");
+   
+     pipe_command_execution(commend,&pipe_count);
+  
    }
    else{
     execvp(commend[0], commend);  // Execute command
@@ -204,9 +207,15 @@ void execute_exteranl_command(char *input_string)
 }
 void execute_internal_commend(char *input_string,char *str)
 {
-    int ret;
+    int ret=0;
     
-    if (strcmp(input_string, "exit") == 0) exit(0);
+    if (strcmp(input_string, "exit") == 0) {
+        ret=1;
+        fflush(stdout);
+        printf("Check\n");
+        exit(0);
+        
+    }
     if (strcmp(input_string, "pwd") == 0) {
         char cwd[100];
         getcwd(cwd, 100);
@@ -246,36 +255,36 @@ if(strcmp(input_string,"fg")==0)
 {
     fg_command_execution(&head);
 }
-    
+
 }
    
-  
  void handler(int num) 
  {
     if (num == SIGINT) {  // Ctrl+C
         if (child_2 > 0) {  
             kill(child_2, SIGINT);  // Kill foreground process
             child_2 = 0;
+           
         } 
         printf("\nMinishell$: ");  // Always display prompt
         fflush(stdout);
     } 
 else if (num == SIGTSTP) {  
     
-                    if (child_2 > 0) {  // Only add jobs when process exists
-                        printf("\n");
-                        insert_at_last(&head);
-                        kill(child_2, SIGTSTP);  // Stop the foreground process properly
-                          child_2 = 0;  // Reset child tracking
+    if (child_2 > 0) {  // Only add jobs when process exists
+     printf("\n");
+    insert_at_last(&head);
+   kill(child_2, SIGTSTP);  // Stop the foreground process properly
+      child_2 = 0;  // Reset child tracking
                         
-                    }       
-                    if(flg1){
-                        printf("\n");
-                        printf("Minishell$: ");
-                      fflush(stdout);
-                        }
-                    
-                }
+  }       
+if(flg1){
+    printf("\n");
+      printf("Minishell$: ");
+        fflush(stdout);
+       }
+                
+    }
  }
 
   
@@ -314,7 +323,7 @@ void print_list(slist *head)
         return;
     }
 
-    int i = 0;
+    int i = 1;
     slist *temp = head;  // Use a temp pointer to avoid modifying head
     while (temp) {
         printf("[%d]+  Stopped         %s\n", i++, temp->str);
@@ -346,13 +355,72 @@ void fg_command_execution(slist **head)
             }
 
             free(temp);  // Free memory
-
-
-
     printf("%s\n", str);
     kill(pid, SIGCONT);  // Resume process
 
     int status;
     waitpid(pid, &status, WUNTRACED);  // Wait for it to finish
 }
-    
+void pipe_command_execution(char **command,int *pipe_count)  
+{
+  
+
+    int pipes[*pipe_count][2];
+
+    // Creating pipes
+    for (int j = 0; j < *pipe_count; j++) {
+        if (pipe(pipes[j]) == -1) {
+            perror("Pipe failed");
+            exit(1);
+        }
+    }
+
+    // Executing commands
+    int cmd_start = 0;
+    for (int j = 0; j <= *pipe_count; j++) {
+        pid_t pid = fork();
+        if (pid == 0) {  // Child process
+
+            // If not the first command, read from previous pipe
+            if (j > 0) {
+                dup2(pipes[j - 1][0], STDIN_FILENO);
+            }
+            // If not the last command, write to current pipe
+            if (j < *pipe_count) {
+                dup2(pipes[j][1], STDOUT_FILENO);
+            }
+
+            // Close all pipes in child
+            for (int k = 0; k < *pipe_count; k++) {
+                close(pipes[k][0]);
+                close(pipes[k][1]);
+            }
+
+            // Execute command
+            execvp(command[cmd_start], &command[cmd_start]);
+            perror("Exec failed");
+            exit(1);
+        }
+
+        // Parent process: Move to the next command
+        if (j > 0) {
+            close(pipes[j - 1][0]);  // Close previous read end
+        }
+        if (j < *pipe_count) {
+            close(pipes[j][1]);  // Close current write end
+        }
+
+        // Move to the next command
+        while (command[cmd_start] != NULL) {
+            cmd_start++;
+        }
+        cmd_start++;  // Move past NULL separator
+    }
+
+    // Wait for all child processes
+    for (int j = 0; j <= *pipe_count; j++) {
+        wait(NULL);
+    }
+
+    return;
+} 
