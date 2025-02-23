@@ -91,6 +91,7 @@ void scan_input(char *prompt, char *input_string)
  if(ret ==BUILTIN){
   
      execute_internal_commend(input_string,str);
+  
   }
   else if(ret ==EXTERNAL){
      
@@ -197,7 +198,7 @@ void execute_exteranl_command(char *input_string)
    if(flag==1){
    
      pipe_command_execution(commend,&pipe_count);
-  
+     exit(0);
    }
    else{
     execvp(commend[0], commend);  // Execute command
@@ -207,12 +208,9 @@ void execute_exteranl_command(char *input_string)
 }
 void execute_internal_commend(char *input_string,char *str)
 {
-    int ret=0;
+    
     
     if (strcmp(input_string, "exit") == 0) {
-        ret=1;
-        fflush(stdout);
-        printf("Check\n");
         exit(0);
         
     }
@@ -379,6 +377,7 @@ void pipe_command_execution(char **command,int *pipe_count)
     int cmd_start = 0;
     for (int j = 0; j <= *pipe_count; j++) {
         pid_t pid = fork();
+        
         if (pid == 0) {  // Child process
 
             // If not the first command, read from previous pipe
@@ -419,8 +418,9 @@ void pipe_command_execution(char **command,int *pipe_count)
 
     // Wait for all child processes
     for (int j = 0; j <= *pipe_count; j++) {
+        
         wait(NULL);
     }
-
+      
     return;
 } 
