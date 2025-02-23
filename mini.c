@@ -1,10 +1,11 @@
 #include "mini.h"  
 int static flg1=1;
+
 char external[200][50];
 
 char *builtins[] = {"echo", "printf", "read", "cd", "pwd", "pushd", "popd", "dirs", "let", "eval",
 						"set", "unset", "export", "declare", "typeset", "readonly", "getopts", "source",
-						"exit", "exec", "shopt", "caller", "true", "type", "hash", "bind", "help","jobs","fg", NULL};
+						"exit", "exec", "shopt", "caller", "true", "type", "hash", "bind", "help","jobs","fg","bg", NULL};
    pid_t child_1,child_2,child;
    char input[100];
    slist *head=NULL;
@@ -254,6 +255,10 @@ if(strcmp(input_string,"fg")==0)
 {
     fg_command_execution(&head);
 }
+if (strcmp(input_string, "bg") == 0) {
+    bg_command_execution(&head);
+}
+
 
 }
    
@@ -324,6 +329,12 @@ void print_list(slist *head)
 
     int i = 1;
     slist *temp = head;  // Use a temp pointer to avoid modifying head
+    if(bg == 1){
+        while (temp) {
+            printf("[%d]+  Done         %s\n", i++, temp->str);
+            temp = temp->link;
+        }
+    }
     while (temp) {
         printf("[%d]+  Stopped         %s\n", i++, temp->str);
         temp = temp->link;
@@ -425,3 +436,41 @@ void pipe_command_execution(char **command,int *pipe_count)
       
     return;
 } 
+void bg_command_execution(slist **head) {
+    static int i=0;
+    if (*head == NULL) {
+        printf("bg: current: no such job\n");
+        return;
+    }
+
+    slist *temp = *head;
+    slist *prev = NULL;
+
+    // Find the last stopped job
+    while (temp->link != NULL) {
+        prev = temp;
+        temp = temp->link;
+    }
+
+    pid_t pid = temp->id;
+    if(i>=0)
+    {
+        i++;
+    }
+    // Resume the process
+    if (kill(pid, SIGCONT) == 0) {
+        printf("[%d]+  Running         %s\n", i, temp->str);
+    } else {
+        perror("bg: failed to continue process");
+        return;
+    }
+
+    // Remove the job from stopped list (background jobs are not in `jobs`)
+    if (prev) {
+        prev->link = NULL;
+    } else {
+        *head = NULL;
+    }
+    free(temp);
+}
+
