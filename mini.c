@@ -329,12 +329,7 @@ void print_list(slist *head)
 
     int i = 1;
     slist *temp = head;  // Use a temp pointer to avoid modifying head
-    if(bg == 1){
-        while (temp) {
-            printf("[%d]+  Done         %s\n", i++, temp->str);
-            temp = temp->link;
-        }
-    }
+   
     while (temp) {
         printf("[%d]+  Stopped         %s\n", i++, temp->str);
         temp = temp->link;
