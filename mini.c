@@ -198,11 +198,8 @@ void execute_exteranl_command(char *input_string)
    if(flag==1){
    
      pipe_command_execution(commend,&pipe_count);
-     int status;
-        while (wait(&status) > 0) {
-            printf("Child process exited, status: %d\n", status);
-        }
-    // exit(0);
+     
+     exit(0);
    }
    else{
     execvp(commend[0], commend);  // Execute command
