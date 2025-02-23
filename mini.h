@@ -58,4 +58,5 @@ int insert_at_last(slist **head);
 void print_list(slist *head);
 void fg_command_execution(slist **head);
 void pipe_command_execution(char **command,int *pipe_count);
+void bg_command_execution(slist **head);
 #endif
